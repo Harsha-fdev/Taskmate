@@ -5,11 +5,22 @@ import { useRouter } from "next/navigation";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import LogoutButton from "@/components/ui/LogoutButton";
 
+interface Task {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+interface User {
+  name: string;
+  email: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
@@ -19,7 +30,8 @@ export default function DashboardPage() {
       return;
     }
 
-    const dummyUser = {
+    // Dummy user data for demo
+    const dummyUser: User = {
       name: "Test User",
       email: "test@example.com",
     };
@@ -28,7 +40,17 @@ export default function DashboardPage() {
     // Load tasks from localStorage or fallback dummy tasks
     const savedTasks = localStorage.getItem("tasks");
     if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
+      try {
+        const parsedTasks = JSON.parse(savedTasks) as Task[];
+        setTasks(parsedTasks);
+      } catch {
+        // In case of JSON parse error, fallback to dummy tasks
+        setTasks([
+          { id: 1, title: "Task 1", completed: true },
+          { id: 2, title: "Task 2", completed: false },
+          { id: 3, title: "Task 3", completed: true },
+        ]);
+      }
     } else {
       setTasks([
         { id: 1, title: "Task 1", completed: true },

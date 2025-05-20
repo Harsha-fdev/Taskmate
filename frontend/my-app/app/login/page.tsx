@@ -1,39 +1,45 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
+
+interface LoginFormInputs {
+  email: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit } = useForm<LoginFormInputs>();
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [router]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
-      const res = await fetch('http://localhost:8000/api/v1/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const res = await fetch("http://localhost:8000/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
 
       const result = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('accessToken', result.accessToken);
-        router.push('/dashboard');
+        localStorage.setItem("accessToken", result.accessToken);
+        router.push("/dashboard");
       } else {
-        alert(result.message || 'Login failed');
+        alert(result.message || "Login failed");
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error("Login error:", err);
+      alert("An error occurred during login. Please try again.");
     }
   };
 
@@ -43,14 +49,19 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-md w-full bg-white p-8 rounded-lg shadow-md space-y-6"
       >
-        <h2 className="text-2xl font-semibold text-center text-gray-900">Login to your account</h2>
+        <h2 className="text-2xl font-semibold text-center text-gray-900">
+          Login to your account
+        </h2>
 
         <div>
-          <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-gray-700"
+          >
             Email
           </label>
           <input
-            {...register('email', { required: true })}
+            {...register("email", { required: true })}
             id="email"
             type="email"
             placeholder="you@example.com"
@@ -60,11 +71,14 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-gray-700"
+          >
             Password
           </label>
           <input
-            {...register('password', { required: true })}
+            {...register("password", { required: true })}
             id="password"
             type="password"
             placeholder="••••••••"

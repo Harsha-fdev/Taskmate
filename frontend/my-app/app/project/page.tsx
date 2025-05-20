@@ -10,17 +10,17 @@ interface Task {
 }
 
 export default function ProjectPage() {
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState<string>('');
   const [tasks, setTasks] = useState<Task[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('tasks');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved) as Task[] : [];
     }
     return [];
   });
-  const [newTask, setNewTask] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [newTask, setNewTask] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -38,8 +38,8 @@ export default function ProjectPage() {
     try {
       const res = await fetch('/api/generateTasks', {
         method: 'POST',
-        body: JSON.stringify({ topic }),
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic }),
       });
 
       const data = await res.json();
@@ -49,16 +49,19 @@ export default function ProjectPage() {
         return;
       }
 
-      const aiTasks: Task[] = data.tasks.map((task: any, i: number) => ({
-        id: Date.now() + i,
-        title: task.title,
-        completed: task.completed,
-      }));
+      // Map AI-generated tasks to Task interface with unique ids
+      const aiTasks: Task[] = data.tasks.map(
+        (task: { title: string; completed: boolean }, index: number) => ({
+          id: Date.now() + index,
+          title: task.title,
+          completed: task.completed,
+        })
+      );
 
       setTasks((prev) => [...prev, ...aiTasks]);
     } catch (err) {
-      setError('Something went wrong');
       console.error(err);
+      setError('Something went wrong while generating tasks.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +72,7 @@ export default function ProjectPage() {
 
     const task: Task = {
       id: Date.now(),
-      title: newTask,
+      title: newTask.trim(),
       completed: false,
     };
 
@@ -113,7 +116,7 @@ export default function ProjectPage() {
       <button
         onClick={handleGenerateTasks}
         disabled={loading}
-        className="w-full bg-blue-600 text-white px-4 py-2 rounded mb-4 hover:bg-blue-700"
+        className="w-full bg-blue-600 text-white px-4 py-2 rounded mb-4 hover:bg-blue-700 disabled:opacity-50"
       >
         {loading ? 'Generating...' : 'Generate Tasks'}
       </button>
@@ -143,6 +146,7 @@ export default function ProjectPage() {
           <button
             onClick={clearTasks}
             className="text-sm text-red-500 hover:underline"
+            aria-label="Clear all tasks"
           >
             Clear All
           </button>
@@ -157,15 +161,24 @@ export default function ProjectPage() {
           >
             <span
               onClick={() => toggleTask(task.id)}
-              className={`flex-1 cursor-pointer ${
+              className={`flex-1 cursor-pointer select-none ${
                 task.completed ? 'line-through text-gray-400' : ''
               }`}
+              aria-pressed={task.completed}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleTask(task.id);
+                }
+              }}
             >
               {task.title}
             </span>
             <button
               onClick={() => deleteTask(task.id)}
               className="text-red-500 hover:text-red-700 ml-4"
+              aria-label={`Delete task: ${task.title}`}
             >
               ✕
             </button>
